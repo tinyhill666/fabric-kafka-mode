@@ -83,11 +83,14 @@ function networkUp () {
 	echo "ERROR !!!! Unable to pull the images "
 	exit 1
     fi
+    echo "watch cli logs:"
     docker logs -f cli
 }
 
 function networkDown () {
     docker-compose -f $COMPOSE_FILE down
+    docker-compose -f docker-compose-solo.yaml down 
+    docker-compose -f docker-compose-kafka.yaml down 
 
     #Cleanup the chaincode containers
     clearContainers
