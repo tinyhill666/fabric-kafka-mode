@@ -7,18 +7,23 @@
 
 
 UP_DOWN="$1"
-CH_NAME="$2"
-CLI_TIMEOUT="$3"
-IF_COUCHDB="$4"
+MODE="$2"
+CH_NAME="$3"
+CLI_TIMEOUT="$4"
+IF_COUCHDB="$5"
 
 : ${CLI_TIMEOUT:="10000"}
 
-COMPOSE_FILE=docker-compose-cli.yaml
+if [ "${MODE}" == "solo" ]; then
+    COMPOSE_FILE=docker-compose-solo.yaml
+else
+    COMPOSE_FILE=docker-compose-kafka.yaml
+fi
 COMPOSE_FILE_COUCH=docker-compose-couch.yaml
 #COMPOSE_FILE=docker-compose-e2e.yaml
 
 function printHelp () {
-	echo "Usage: ./network_setup <up|down> <\$channel-name> <\$cli_timeout> <couchdb>.\nThe arguments must be in order."
+	echo "Usage: ./network_setup <up|down> <solo|kafka> <\$channel-name> <\$cli_timeout> <couchdb>.\nThe arguments must be in order."
 }
 
 function validateArgs () {
@@ -27,6 +32,11 @@ function validateArgs () {
 		printHelp
 		exit 1
 	fi
+    if [ -z "${MODE}" ]; then
+        echo "Option solo / kafka / restart not mentioned"
+        printHelp
+        exit 1
+    fi
 	if [ -z "${CH_NAME}" ]; then
 		echo "setting to default channel 'mychannel'"
 		CH_NAME=mychannel
@@ -54,10 +64,15 @@ function removeUnwantedImages() {
 function networkUp () {
     #Generate all the artifacts that includes org certs, orderer genesis block,
     # channel configuration transaction
+
+    if [ "${MODE}" == "solo" ]; then
+        cp configtx-solo.yaml configtx.yaml 
+    else
+        cp configtx-kafka.yaml configtx.yaml 
+    fi
+
     source generateArtifacts.sh $CH_NAME
     
-    cp ./channel-artifacts/genesis.block ./channel-artifacts/genesis1.block 
-    cp ./channel-artifacts/genesis.block ./channel-artifacts/genesis2.block 
 
     if [ "${IF_COUCHDB}" == "couchdb" ]; then
       CHANNEL_NAME=$CH_NAME TIMEOUT=$CLI_TIMEOUT docker-compose -f $COMPOSE_FILE -f $COMPOSE_FILE_COUCH up -d 2>&1
@@ -81,7 +96,9 @@ function networkDown () {
     removeUnwantedImages
 
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config
+    rm -rf channel-artifacts/* crypto-config
+
+    rm configtx.yaml
 }
 
 validateArgs

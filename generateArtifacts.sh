@@ -12,11 +12,9 @@ CHANNEL_NAME=$1
 : ${CHANNEL_NAME:="mychannel"}
 echo $CHANNEL_NAME
 
-export FABRIC_ROOT=$PWD/../..
 export FABRIC_CFG_PATH=$PWD
 echo
 
-OS_ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')" | awk '{print tolower($0)}')
 
 ## Using docker-compose template replace private key file names with constants
 function replacePrivateKey () {
@@ -42,15 +40,8 @@ function replacePrivateKey () {
 
 ## Generates Org certs using cryptogen tool
 function generateCerts (){
-	CRYPTOGEN=$FABRIC_ROOT/release/$OS_ARCH/bin/cryptogen
+	CRYPTOGEN=$GOPATH/bin/cryptogen
 	echo $CRYPTOGEN
-
-	if [ -f "$CRYPTOGEN" ]; then
-            echo "Using cryptogen -> $CRYPTOGEN"
-	else
-	    echo "Building cryptogen"
-	    make -C $FABRIC_ROOT release
-	fi
 
 	echo
 	echo "##########################################################"
@@ -63,14 +54,8 @@ function generateCerts (){
 ## Generate orderer genesis block , channel configuration transaction and anchor peer update transactions
 function generateChannelArtifacts() {
 
-	CONFIGTXGEN=$FABRIC_ROOT/release/$OS_ARCH/bin/configtxgen
+	CONFIGTXGEN=$GOPATH/bin/configtxgen
 	echo $CONFIGTXGEN
-	if [ -f "$CONFIGTXGEN" ]; then
-            echo "Using configtxgen -> $CONFIGTXGEN"
-	else
-	    echo "Building configtxgen"
-	    make -C $FABRIC_ROOT release
-	fi
 
 	echo "##########################################################"
 	echo "#########  Generating Orderer Genesis block ##############"
