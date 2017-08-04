@@ -1,4 +1,4 @@
-./configtx.yaml
-./docker-compose-e2e.yaml
-./crypto-config/*
-./channel-artifacts/*
+configtx.yaml
+docker-compose-e2e.yaml
+crypto-config/*
+channel-artifacts/*
